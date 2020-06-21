@@ -1,11 +1,12 @@
 #ifndef LEPTJSON_H__
 #define LEPTJSON_H__
-#include <string>
+#include <iostream>
+#include <assert.h>
 using namespace::std;
 
 enum class lept_type
 {
-	LEPT_NULL,
+	LEPT_NULL = 0,
 	LEPT_FALSE,
 	LEPT_TRUE,
 	LEPT_NUMBER,
@@ -42,6 +43,7 @@ public:
 	const char* lept_get_context(void) { return this->json; }
 
 	void lept_parse_whitespace();
+	int lept_parse_false(lept_value& v);
 	int lept_parse_true(lept_value& v);
 	int lept_parse_null(lept_value& v);
 	int lept_parse_value(lept_value& v);
