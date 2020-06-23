@@ -22,7 +22,9 @@ public:
 	int lept_parse_true(lept_value& v);
 	int lept_parse_null(lept_value& v);
 	int lept_parse_value(lept_value& v);
+	int lept_parse_number(lept_value& v);
 	int lept_parse(lept_value& v);
+
 private:
 	const char* json;
 };
