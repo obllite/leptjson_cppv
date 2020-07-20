@@ -61,13 +61,13 @@ int lept_context::lept_parse_number(lept_value& value)
 	const char* p = this->json;
 	if (*p == '-') p++;
 	if (*p == '0') p++;
-	// 整数
+	// 脮没脢媒
 	else 
 	{
 		if (!is_digit_1to9(*p)) return LEPT_PARSE_INVALID_VALUE;
 		while (is_digit(*++p));
 	}
-	// 小数
+	// 脨隆脢媒
 	if (*p == '.') 
 	{
 		p++;
