@@ -1,32 +1,42 @@
-#ifndef LEPTJSON_CONTEXT_H__
-#define LEPTJSON_CONTEXT_H__
-#include <iostream>
-#include <assert.h>
-#include "lept_value.h"
+#pragma once
+#include "json-token.h"
+#include"my-exception.h"
 using namespace::std;
 
-class lept_context
+class Parser final
 {
 public:
-	lept_context() = default;
-	lept_context(const char* json_) : json(json_) { };
-	lept_context& operator=(const lept_context& context) { if (this != &context)json = context.json; }
+	Parser() = default;
+	Parser(const char* context) : parsed_context_(context) { };
+	Parser& operator=(const Parser& context) { if (this != &context)parsed_context_ = context.parsed_context_; }
 
-	~lept_context() = default;
+	~Parser() = default;
 
-	void lept_set_context(const char* json_) { this->json = json_; }
-	const char* lept_get_context(void) { return this->json; }
+	void setContext(const char* context) { this->parsed_context_ = context; }
+	const char* getContext(void) { return this->parsed_context_; }
 
-	void lept_parse_whitespace();
-	int lept_parse_false(lept_value& v);
-	int lept_parse_true(lept_value& v);
-	int lept_parse_null(lept_value& v);
-	int lept_parse_value(lept_value& v);
-	int lept_parse_number(lept_value& v);
-	int lept_parse(lept_value& v);
+	JsonToken parse();
+
 
 private:
-	const char* json;
+	void parseWhitespace();
+	string parseRawString();
+	unsigned parse4hex();
+	string encodeUTF8(unsigned u);
+	JsonToken parseValue();
+	JsonToken parseFalse();
+	JsonToken parseTrue();
+	JsonToken parseNull();
+	JsonToken parseNumber();
+	JsonToken parseLiteral(const string& literal);
+	JsonToken parseString() { return JsonToken(parseRawString()); }
+	JsonToken parseArray();
+	JsonToken parseObject();
+
+	void parseErr(const string& err_msg) const {
+		throw myException(err_msg + ": " + parsed_context_);
+	}
+
+	const char* parsed_context_;
 };
 
-#endif
