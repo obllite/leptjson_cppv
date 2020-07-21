@@ -1,44 +1,139 @@
-#ifndef LEPTJSON_VALUE_H__
-#define LEPTJSON_VAlUE_H__
-#include <iostream>
-#include <assert.h>
+#pragma once
+#include"my-exception.h"
+#include"json-token.h"
+#include<utility>
 using namespace::std;
 
-enum class lept_type
-{
-	LEPT_NULL,
-	LEPT_FALSE,
-	LEPT_TRUE,
-	LEPT_NUMBER,
-	LEPT_STRING,
-	LEPT_ARRAY,
-	LEPT_OBJECT
-};
-
-class lept_value
+class JsonValue
 {
 public:
+	virtual ~JsonValue() = default;
 
-	lept_value() = default;
-	lept_value(lept_type type_, double num_):type(type_), num(num_) {};
-	~lept_value() = default;
+	virtual JsonType type() const = 0;
 
-	lept_type lept_get_type() { return type; };
-	double lept_get_num() { assert(type == lept_type::LEPT_NUMBER); return num; }
-	void lept_set_type(const lept_type type_) { this->type = type_; }
-	void lept_set_num(const double num_) { this->num = num_; }
-private:
-	lept_type type;
-	double num;
+	virtual bool toBool() const {
+		throw myException("This value is NOT a boolean");
+	}
+	virtual double toNumber() const {
+		throw myException("This value is NOT a double");
+	}
+	virtual const string& toString() const {
+		throw myException("This value is NOT a string");
+	}
+	virtual const JsonToken::array_t& toArray() const {
+		throw myException("This value is NOT a array");
+	}
+	virtual const JsonToken::object_t& toObject() const {
+		throw myException("This value is NOT a object");
+	}
+
+	virtual JsonToken& operator[](size_t) {
+		throw myException("This value is NOT a array");
+	}
+	virtual const JsonToken& operator[](size_t) const {
+		throw myException("This value is NOT a array");
+	}
+
+	virtual JsonToken& operator[](const string&) {
+		throw myException("This value is NOT a object");
+	}
+	virtual const JsonToken& operator[](const string&) const {
+		throw myException("This value is NOT a object");
+	}
+
+	virtual size_t size() const {
+		return 0;
+	}
 };
 
-enum 
+template <typename T, JsonType U>
+class Value : public JsonValue {
+public:
+	Value(const T& val) : val_(val) {}
+	Value(T&& val) : val_(val) {}
+	JsonType type() const final {
+		return U;
+	}
+
+protected:
+	T val_;
+};
+
+class JsonNull final : public Value<nullptr_t, JsonType::kNull>
 {
-	LEPT_PARSE_OK = 0,
-	LEPT_PARSE_EXPECT_VALUE,
-	LEPT_PARSE_INVALID_VALUE,
-	LEPT_PARSE_ROOT_NOT_SINGULAR,
-	LEPT_PARSE_NUMBER_TOO_BIG
+public:
+	explicit JsonNull(nullptr_t) : Value(nullptr) {}
 };
 
-#endif
+class JsonBool final : public Value<bool, JsonType::kBool>
+{
+public:
+	explicit JsonBool(bool val) : Value(val) {}
+	bool toBool() const override {
+		return val_;
+	}
+};
+
+class JsonNumber final : public Value<double, JsonType::kNumber>
+{
+public:
+	explicit JsonNumber(double val) : Value(val) {}
+	double toNumber() const override {
+		return val_;
+	}
+};
+
+class JsonString final : public Value<string, JsonType::kString>
+{
+public:
+	explicit JsonString(const string& val) : Value(val) {}
+	explicit JsonString(string&& val) : Value(move(val)) {}
+	const string& toString() const override {
+		return val_;
+	}
+};
+
+class JsonArray final : public Value<JsonToken::array_t, JsonType::kArray>
+{
+public:
+	explicit JsonArray(const JsonToken::array_t& val) : Value(val) {}
+	explicit JsonArray(JsonToken::array_t&& val) noexcept: Value(move(val)) {}
+
+	const JsonToken::array_t& toArray() const override {
+		return val_;
+	}
+
+	const JsonToken& operator[](size_t i)const override {
+		return val_[i];
+	}
+
+	JsonToken& operator[](size_t i) override {
+		return val_[i];
+	}
+
+	size_t size() const override {
+		return val_.size();
+	}
+};
+
+class JsonObject final : public Value<JsonToken::object_t, JsonType::kObject> {
+public:
+	explicit JsonObject(const JsonToken::object_t& val) : Value(val) {}
+	explicit JsonObject(JsonToken::object_t&& val) : Value(move(val)) {}
+
+	const JsonToken::object_t& toObject() const override {
+		return val_;
+	}
+
+	const JsonToken& operator[](const string& i) const override {
+		return val_.at(i);
+	}
+
+	JsonToken& operator[](const string& i) override {
+		return val_.at(i);
+	}
+
+	size_t size() const override {
+		return val_.size();
+	}
+};
